@@ -170,4 +170,33 @@ CREATE TABLE IF NOT EXISTS hoa_score_audit_log (
   payload JSONB NOT NULL DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS hoa_template_versions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  org_id TEXT NOT NULL,
+  state TEXT NOT NULL,
+  statute_year INTEGER NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  file_url TEXT,
+  review_status TEXT NOT NULL DEFAULT 'pending',
+  attorney_name TEXT,
+  attorney_reviewed_at TIMESTAMPTZ,
+  version TEXT NOT NULL DEFAULT '1.0',
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hoa_template_downloads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id UUID NOT NULL REFERENCES hoa_template_versions(id) ON DELETE CASCADE,
+  org_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  user_email TEXT NOT NULL,
+  disclaimer_acknowledged_at TIMESTAMPTZ NOT NULL,
+  downloaded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
