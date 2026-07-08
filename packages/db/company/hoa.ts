@@ -58,4 +58,50 @@ CREATE TABLE IF NOT EXISTS hoa_bid_tokens (
   used_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS hoa_bid_invitations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rfp_id UUID NOT NULL REFERENCES hoa_rfps(id) ON DELETE CASCADE,
+  token_id UUID NOT NULL REFERENCES hoa_bid_tokens(id) ON DELETE CASCADE,
+  company_name TEXT NOT NULL,
+  company_email TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'invited',
+  invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  opened_at TIMESTAMPTZ,
+  submitted_at TIMESTAMPTZ,
+  declined_at TIMESTAMPTZ,
+  last_nudge_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hoa_bid_submissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  invitation_id UUID NOT NULL REFERENCES hoa_bid_invitations(id) ON DELETE CASCADE,
+  rfp_id UUID NOT NULL REFERENCES hoa_rfps(id) ON DELETE CASCADE,
+  company_name TEXT NOT NULL,
+  company_email TEXT NOT NULL,
+  years_in_business INTEGER,
+  company_description TEXT,
+  cam_license_number TEXT,
+  cam_license_state TEXT,
+  cam_license_expiry TEXT,
+  general_liability_amount TEXT,
+  general_liability_expiry TEXT,
+  errors_omissions_amount TEXT,
+  errors_omissions_expiry TEXT,
+  fidelity_bond_amount TEXT,
+  insurance_carrier TEXT,
+  annual_revenue TEXT,
+  portfolio_unit_count INTEGER,
+  management_fee_base TEXT,
+  management_fee_additional TEXT,
+  references_json TEXT,
+  insurance_cert_url TEXT,
+  financial_statement_url TEXT,
+  cam_license_url TEXT,
+  self_reported_disclaimer_acknowledged BOOLEAN NOT NULL DEFAULT FALSE,
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
