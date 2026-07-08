@@ -104,4 +104,29 @@ CREATE TABLE IF NOT EXISTS hoa_bid_submissions (
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS hoa_bid_extractions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  bid_submission_id UUID NOT NULL REFERENCES hoa_bid_submissions(id) ON DELETE CASCADE,
+  rfp_id UUID NOT NULL REFERENCES hoa_rfps(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending',
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS hoa_extraction_fields (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  extraction_id UUID NOT NULL REFERENCES hoa_bid_extractions(id) ON DELETE CASCADE,
+  field_key TEXT NOT NULL,
+  field_label TEXT NOT NULL,
+  extracted_value TEXT,
+  confidence FLOAT NOT NULL DEFAULT 0.0,
+  human_reviewed BOOLEAN NOT NULL DEFAULT FALSE,
+  accepted_value TEXT,
+  reviewed_at TIMESTAMPTZ,
+  reviewed_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(extraction_id, field_key)
+);
 `;
