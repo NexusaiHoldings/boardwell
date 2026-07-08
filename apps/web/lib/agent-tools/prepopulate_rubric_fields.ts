@@ -112,15 +112,13 @@ export async function handlePrepopulateRubricFields(
     };
   }
 
-  const db = ctx.db as { query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }> };
-
   let written = 0;
   const errors: string[] = [];
 
   for (const field of highConfidenceFields) {
     try {
       // Upsert draft score row: insert or update the field value on conflict.
-      await db.query(
+      await ctx.db.execute(
         `INSERT INTO hoa_bid_scores (id, bid_id, field_name, extracted_value, confidence, status, created_at, updated_at)
          VALUES (gen_random_uuid(), $1, $2, $3::jsonb, $4, 'draft', NOW(), NOW())
          ON CONFLICT (bid_id, field_name)
@@ -129,12 +127,10 @@ export async function handlePrepopulateRubricFields(
            confidence = EXCLUDED.confidence,
            status = 'draft',
            updated_at = NOW()`,
-        [
-          bid_id,
-          field.field_name,
-          JSON.stringify(field.extracted_value),
-          field.confidence,
-        ]
+        bid_id,
+        field.field_name,
+        JSON.stringify(field.extracted_value),
+        field.confidence
       );
       written++;
     } catch (e) {
