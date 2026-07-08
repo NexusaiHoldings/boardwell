@@ -3,6 +3,7 @@ export type NavLink = {
   href: string;
   external?: boolean;
   badge?: string;
+  adminOnly?: boolean;
 };
 
 export type NavGroup = {
