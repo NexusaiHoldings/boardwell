@@ -216,3 +216,19 @@ CREATE TABLE IF NOT EXISTS hoa_template_downloads (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 `;
+
+export const HOA_REPORTS_DDL = `
+CREATE TABLE IF NOT EXISTS hoa_decision_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rfp_id UUID NOT NULL REFERENCES hoa_rfps(id) ON DELETE CASCADE,
+  org_id TEXT NOT NULL,
+  generated_by TEXT NOT NULL,
+  generated_by_email TEXT NOT NULL,
+  snapshot_json JSONB NOT NULL DEFAULT '{}',
+  pdf_url TEXT,
+  emailed_at TIMESTAMPTZ,
+  email_recipients TEXT[] NOT NULL DEFAULT '{}',
+  disclaimer_text TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+`;
