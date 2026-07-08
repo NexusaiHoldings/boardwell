@@ -129,4 +129,45 @@ CREATE TABLE IF NOT EXISTS hoa_extraction_fields (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE(extraction_id, field_key)
 );
+
+CREATE TABLE IF NOT EXISTS hoa_scoring_rubrics (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rfp_id UUID NOT NULL REFERENCES hoa_rfps(id) ON DELETE CASCADE,
+  org_id TEXT NOT NULL,
+  weight_price FLOAT NOT NULL DEFAULT 0.25,
+  weight_cam_license FLOAT NOT NULL DEFAULT 0.20,
+  weight_portfolio_size FLOAT NOT NULL DEFAULT 0.20,
+  weight_insurance FLOAT NOT NULL DEFAULT 0.20,
+  weight_references FLOAT NOT NULL DEFAULT 0.15,
+  created_by TEXT NOT NULL,
+  updated_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(rfp_id)
+);
+
+CREATE TABLE IF NOT EXISTS hoa_score_overrides (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rubric_id UUID NOT NULL REFERENCES hoa_scoring_rubrics(id) ON DELETE CASCADE,
+  bid_submission_id UUID NOT NULL REFERENCES hoa_bid_submissions(id) ON DELETE CASCADE,
+  rfp_id UUID NOT NULL REFERENCES hoa_rfps(id) ON DELETE CASCADE,
+  dimension TEXT NOT NULL,
+  override_score FLOAT NOT NULL,
+  override_note TEXT,
+  overridden_by TEXT NOT NULL,
+  overridden_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(rubric_id, bid_submission_id, dimension)
+);
+
+CREATE TABLE IF NOT EXISTS hoa_score_audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rfp_id UUID NOT NULL,
+  org_id TEXT NOT NULL,
+  actor_id TEXT NOT NULL,
+  actor_email TEXT NOT NULL,
+  action TEXT NOT NULL,
+  payload JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 `;
