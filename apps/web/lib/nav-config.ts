@@ -1,18 +1,17 @@
-export interface NavLink {
+export type NavLink = {
   label: string;
   href: string;
-  icon?: string;
-}
+};
 
-export interface NavGroup {
+export type NavGroup = {
   label: string;
-  items: NavLink[];
-}
+  links: NavLink[];
+};
 
-export interface NavConfig {
+export type NavConfig = {
   primary: NavLink[];
   groups: NavGroup[];
-}
+};
 
 export const NAV_CONFIG: NavConfig = {
   primary: [
@@ -24,7 +23,7 @@ export const NAV_CONFIG: NavConfig = {
   groups: [
     {
       label: "Admin",
-      items: [{ label: "Verification Queue", href: "/admin/verification" }],
+      links: [{ label: "Verification Queue", href: "/admin/verification" }],
     },
   ],
 };
