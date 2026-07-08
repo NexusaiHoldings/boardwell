@@ -24,6 +24,7 @@
  */
 
 import type { HandlerContext, HandlerResult } from "@nexus/identity-and-access";
+import { handlePrepopulateRubricFields } from "./prepopulate_rubric_fields";
 
 type Args = Record<string, unknown>;
 
@@ -32,4 +33,5 @@ export const DOMAIN_DISPATCH: Record<
   (ctx: HandlerContext, args: Args) => Promise<HandlerResult>
 > = {
   // Build agent appends entries here per CTO-declared new_domain_tool.
+  prepopulate_rubric_fields: (ctx, a) => handlePrepopulateRubricFields(ctx, a),
 };
