@@ -3,6 +3,22 @@
  * migrate.ts runs every *_DDL constant against the company database at deploy.
  */
 
+export const HOA_VERIFICATION_DDL = `
+CREATE TABLE IF NOT EXISTS hoa_verification_reviews (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  bid_submission_id UUID NOT NULL REFERENCES hoa_bid_submissions(id) ON DELETE CASCADE,
+  rfp_id UUID NOT NULL,
+  reviewer_id TEXT NOT NULL,
+  reviewer_email TEXT NOT NULL,
+  action TEXT NOT NULL,
+  notes TEXT,
+  badge_granted BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(bid_submission_id)
+);
+`;
+
 export const HOA_DDL = `
 CREATE TABLE IF NOT EXISTS hoa_intake_questionnaires (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
