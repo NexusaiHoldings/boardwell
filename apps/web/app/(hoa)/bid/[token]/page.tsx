@@ -46,6 +46,7 @@ interface FormState {
   managementFeeAdditional: string;
   references: Reference[];
   disclaimerAcknowledged: boolean;
+  saveProfile: boolean;
 }
 
 const INITIAL_FORM: FormState = {
@@ -66,6 +67,7 @@ const INITIAL_FORM: FormState = {
   managementFeeAdditional: '',
   references: [{ name: '', company: '', email: '', phone: '' }],
   disclaimerAcknowledged: false,
+  saveProfile: true,
 };
 
 function isSectionComplete(section: SectionKey, form: FormState): boolean {
@@ -498,6 +500,7 @@ export default function BidPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
+  const [prefilled, setPrefilled] = useState(false);
 
   function patchForm(patch: Partial<FormState>) {
     setForm((prev) => ({ ...prev, ...patch }));
@@ -514,6 +517,33 @@ export default function BidPage() {
       setContext(ctx);
       if (ctx.invitation.status === 'submitted') setSubmitted(true);
       else if (ctx.invitation.status === 'declined') setDeclined(true);
+      else if (ctx.prefill) {
+        // 85/15: seed the draft from the company's saved profile — they
+        // review, adjust pricing for THIS community, and submit.
+        const pf = ctx.prefill;
+        setPrefilled(true);
+        setForm((prev) => ({
+          ...prev,
+          companyDescription: pf.company_description ?? prev.companyDescription,
+          yearsInBusiness: pf.years_in_business ?? prev.yearsInBusiness,
+          camLicenseNumber: pf.cam_license_number ?? prev.camLicenseNumber,
+          camLicenseState: pf.cam_license_state ?? prev.camLicenseState,
+          camLicenseExpiry: pf.cam_license_expiry ?? prev.camLicenseExpiry,
+          generalLiabilityAmount: pf.general_liability_amount ?? prev.generalLiabilityAmount,
+          generalLiabilityExpiry: pf.general_liability_expiry ?? prev.generalLiabilityExpiry,
+          errorsOmissionsAmount: pf.errors_omissions_amount ?? prev.errorsOmissionsAmount,
+          errorsOmissionsExpiry: pf.errors_omissions_expiry ?? prev.errorsOmissionsExpiry,
+          fidelityBondAmount: pf.fidelity_bond_amount ?? prev.fidelityBondAmount,
+          insuranceCarrier: pf.insurance_carrier ?? prev.insuranceCarrier,
+          annualRevenue: pf.annual_revenue ?? prev.annualRevenue,
+          portfolioUnitCount: pf.portfolio_unit_count ?? prev.portfolioUnitCount,
+          managementFeeBase: pf.management_fee_base ?? prev.managementFeeBase,
+          managementFeeAdditional: pf.management_fee_additional ?? prev.managementFeeAdditional,
+          references: pf.references_json.length > 0
+            ? pf.references_json.map((r) => ({ name: r.name ?? '', company: r.company ?? '', email: r.email ?? '', phone: r.phone ?? '' }))
+            : prev.references,
+        }));
+      }
       setLoading(false);
       await trackInvitationOpened(token);
     } catch {
@@ -554,6 +584,7 @@ export default function BidPage() {
       managementFeeAdditional: form.managementFeeAdditional,
       references: form.references.filter((r) => r.name.trim().length > 0),
       selfReportedDisclaimerAcknowledged: form.disclaimerAcknowledged,
+      saveProfile: form.saveProfile,
     };
 
     setSubmitting(true);
@@ -604,6 +635,12 @@ export default function BidPage() {
           <p style={{ color: '#166534', maxWidth: '420px', margin: '0 auto' }}>
             Thank you, <strong>{context?.invitation.company_name}</strong>. Your bid for{' '}
             <strong>{context?.rfpTitle}</strong> has been received. The board will contact you during the review process.
+          </p>
+          <p style={{ color: '#166534', maxWidth: '420px', margin: '0.75rem auto 0', fontSize: '0.9rem' }}>
+            Your company details were saved to your Boardwell vendor profile — your next RFP
+            invitation will arrive pre-filled. Sign up or log in with{' '}
+            <strong>{context?.invitation.company_email}</strong> at{' '}
+            <a href="/vendor">boardwell — vendor portal</a> to review your profile and invitations.
           </p>
         </div>
       </main>
@@ -659,6 +696,26 @@ export default function BidPage() {
           {context?.communityName && `${context.communityName} · `}
           Submitting as <strong>{context?.invitation.company_name}</strong>
         </p>
+
+        {prefilled && (
+          <div
+            role="note"
+            style={{
+              marginTop: '1rem',
+              padding: '0.75rem 1rem',
+              borderRadius: 8,
+              border: '1px solid #93c5fd',
+              background: '#eff6ff',
+              color: '#1e3a8a',
+              fontSize: '0.9rem',
+              lineHeight: 1.55,
+            }}
+          >
+            <strong>Pre-filled from your saved Boardwell profile.</strong> Review each section
+            — especially your fees for this community — update anything that changed, then
+            submit. Edits here also refresh your saved profile.
+          </div>
+        )}
 
         <div
           className="card"
@@ -753,6 +810,23 @@ export default function BidPage() {
                     style={{ marginTop: '2px', flexShrink: 0 }}
                   />
                   I acknowledge this disclaimer and confirm all submitted information is accurate.
+                </label>
+              </div>
+
+              <div className="card" style={{ background: '#f8fafc', marginBottom: '1rem' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.875rem', color: '#334155' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.saveProfile}
+                    onChange={(e) => patchForm({ saveProfile: e.target.checked })}
+                    style={{ marginTop: '2px', flexShrink: 0 }}
+                  />
+                  <span>
+                    <strong>Save my company details to a Boardwell vendor profile.</strong>{' '}
+                    Your next RFP invitation arrives pre-filled — you review, set your fees for
+                    that community, and submit. You can manage your profile any time from the
+                    vendor portal.
+                  </span>
                 </label>
               </div>
 

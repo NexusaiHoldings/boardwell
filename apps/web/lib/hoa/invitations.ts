@@ -2,6 +2,11 @@
 
 import { Pool } from 'pg';
 import { createBidToken } from '@/lib/hoa/access';
+import {
+  getVendorProfileByEmail,
+  upsertVendorProfileFromBid,
+  type VendorProfile,
+} from '@/lib/hoa/vendor-profile';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -39,12 +44,20 @@ export interface BidSubmissionData {
   managementFeeAdditional: string;
   references: Array<{ name: string; company: string; email: string; phone: string }>;
   selfReportedDisclaimerAcknowledged: boolean;
+  /** Save/refresh this company's Boardwell vendor profile from this bid (85/15 loop). */
+  saveProfile?: boolean;
 }
 
 export interface TokenBidContext {
   invitation: InvitationRecord;
   rfpTitle: string;
   communityName: string | null;
+  /**
+   * The invited company's saved vendor profile, when one exists — pre-fills
+   * the bid form (the chairman's 85/15 model). Token possession authorizes
+   * this: the signed token was mailed to this company's own address.
+   */
+  prefill: VendorProfile | null;
 }
 
 export interface NudgeCandidate {
@@ -187,6 +200,7 @@ export async function getInvitationForToken(token: string): Promise<TokenBidCont
     },
     rfpTitle: row.rfp_title,
     communityName: row.community_name,
+    prefill: await getVendorProfileByEmail(row.company_email).catch(() => null),
   };
 }
 
@@ -257,6 +271,16 @@ export async function submitBid(
   );
 
   await pool.query(`UPDATE hoa_bid_tokens SET used_at = NOW() WHERE token = $1`, [token]);
+
+  // 85/15 loop: refresh the company's saved profile from this bid so the
+  // NEXT invitation pre-fills. Best-effort — never blocks the submission.
+  if (data.saveProfile !== false) {
+    try {
+      await upsertVendorProfileFromBid(invitation.company_email, invitation.company_name, data);
+    } catch {
+      /* profile save is best-effort */
+    }
+  }
 
   return { success: true };
 }

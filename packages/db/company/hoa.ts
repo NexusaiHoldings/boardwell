@@ -255,3 +255,41 @@ CREATE TABLE IF NOT EXISTS hoa_template_engagement (
 CREATE INDEX IF NOT EXISTS idx_hoa_template_engagement_slug
   ON hoa_template_engagement (template_slug, created_at DESC);
 `;
+
+/**
+ * Management-company (vendor) saved profiles — phase 2 of the chairman's
+ * two-sided model (lab discussion 2026-07-08): "the management company
+ * subscribed... providing their rfp response info ONE TIME and each rfp they
+ * get notified on they just provide pricing." A profile is keyed by company
+ * email (the same identity the bid token is mailed to) and refreshed from
+ * each submitted bid ("they will get a draft of each response to edit and
+ * they can edit their core data if they see fit from the draft responses").
+ * A login account is OPTIONAL — the /vendor portal links a session user to
+ * the profile by email; the token-based bid flow keeps working without one.
+ */
+export const HOA_VENDOR_PROFILES_DDL = `
+CREATE TABLE IF NOT EXISTS hoa_vendor_profiles (
+  id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_email             TEXT NOT NULL,
+  company_name              TEXT,
+  years_in_business         TEXT,
+  company_description       TEXT,
+  cam_license_number        TEXT,
+  cam_license_state         TEXT,
+  cam_license_expiry        TEXT,
+  general_liability_amount  TEXT,
+  general_liability_expiry  TEXT,
+  errors_omissions_amount   TEXT,
+  errors_omissions_expiry   TEXT,
+  fidelity_bond_amount      TEXT,
+  insurance_carrier         TEXT,
+  annual_revenue            TEXT,
+  portfolio_unit_count      TEXT,
+  management_fee_base       TEXT,
+  management_fee_additional TEXT,
+  references_json           JSONB NOT NULL DEFAULT '[]'::jsonb,
+  created_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT hoa_vendor_profiles_email_unique UNIQUE (company_email)
+);
+`;
