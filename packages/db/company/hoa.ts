@@ -232,3 +232,26 @@ CREATE TABLE IF NOT EXISTS hoa_decision_reports (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 `;
+
+/**
+ * Template-library engagement (product-flywheel-001 Phase B canary).
+ * The library's document bodies are repo-backed content (lib/hoa/
+ * template-library.ts); this table records copy/download engagement per
+ * template slug, anonymous-friendly (user/org context nullable) so the
+ * public, no-login library still yields usage signal.
+ */
+export const HOA_TEMPLATE_ENGAGEMENT_DDL = `
+CREATE TABLE IF NOT EXISTS hoa_template_engagement (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_slug TEXT NOT NULL,
+  action TEXT NOT NULL,
+  user_id TEXT,
+  org_id TEXT,
+  user_email TEXT,
+  disclaimer_acknowledged_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hoa_template_engagement_slug
+  ON hoa_template_engagement (template_slug, created_at DESC);
+`;

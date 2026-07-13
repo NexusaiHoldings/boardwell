@@ -1,494 +1,153 @@
-'use client';
-
-import React, { useState, useEffect, useTransition } from 'react';
+import Link from 'next/link';
+import type { Metadata } from 'next';
 import {
-  getTemplatesPageData,
-  recordDownload,
-  type TemplateVersion,
-  type UserContext,
-} from '@/lib/hoa/templates';
+  CATEGORY_META,
+  STATE_LABELS,
+  TEMPLATE_LIBRARY,
+  templatesByCategory,
+  templateWordCount,
+  type LaunchState,
+  type TemplateDoc,
+} from '@/lib/hoa/template-library';
 
-const LAUNCH_STATES = ['FL', 'CA', 'TX', 'AZ', 'NV'] as const;
-
-const STATE_META: Record<string, { label: string; color: string; bg: string }> = {
-  FL: { label: 'Florida', color: '#fff', bg: '#003087' },
-  CA: { label: 'California', color: '#fff', bg: '#B31942' },
-  TX: { label: 'Texas', color: '#fff', bg: '#BF0A30' },
-  AZ: { label: 'Arizona', color: '#fff', bg: '#002868' },
-  NV: { label: 'Nevada', color: '#fff', bg: '#003865' },
+export const metadata: Metadata = {
+  title: 'Free HOA Board Document Templates | Boardwell',
+  description:
+    'Ten board-ready HOA documents — management company RFP, management agreement, termination notice, meeting minutes, violation notice, and more. State notes for FL, CA, TX, AZ, and NV. No signup required.',
 };
 
-function StateChip({ state }: { state: string }) {
-  const meta = STATE_META[state] ?? { label: state, color: '#fff', bg: '#64748b' };
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.3rem',
-        padding: '0.2rem 0.6rem',
-        borderRadius: 99,
-        background: meta.bg,
-        color: meta.color,
-        fontSize: '0.72rem',
-        fontWeight: 700,
-        letterSpacing: '0.04em',
-      }}
-    >
-      {state}
-    </span>
-  );
-}
+const STATE_ORDER: LaunchState[] = ['FL', 'CA', 'TX', 'AZ', 'NV'];
 
-function ReviewBadge({ status }: { status: string }) {
-  const approved = status === 'approved';
+function TemplateCard({ doc }: { doc: TemplateDoc }) {
+  const words = templateWordCount(doc);
   return (
-    <span
-      style={{
-        fontSize: '0.72rem',
-        fontWeight: 600,
-        padding: '0.15rem 0.55rem',
-        borderRadius: 99,
-        background: approved ? '#d1fae5' : '#fef3c7',
-        color: approved ? '#065f46' : '#92400e',
-      }}
-    >
-      {approved ? 'Attorney Approved' : 'Review in Progress'}
-    </span>
-  );
-}
-
-interface DisclaimerModalProps {
-  template: TemplateVersion;
-  onAccept: () => void;
-  onClose: () => void;
-  loading: boolean;
-}
-
-function DisclaimerModal({ template, onAccept, onClose, loading }: DisclaimerModalProps) {
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="disclaimer-title"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0,0,0,0.45)',
-        padding: '1rem',
-      }}
-    >
+    <div className="feature-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <span className="pill">{doc.docType}</span>
+        <span className="muted" style={{ fontSize: '0.8rem' }}>
+          ~{doc.fillMinutes} min to fill in · {words.toLocaleString()} words
+        </span>
+      </div>
+      <h3 style={{ margin: 0, fontSize: '1.08rem', lineHeight: 1.35 }}>
+        <Link href={`/templates/${doc.slug}`} style={{ textDecoration: 'none' }}>
+          {doc.title}
+        </Link>
+      </h3>
+      <p className="muted" style={{ margin: 0, fontSize: '0.92rem', lineHeight: 1.6, flex: 1 }}>
+        {doc.description}
+      </p>
       <div
         style={{
-          background: '#fff',
-          borderRadius: '0.75rem',
-          padding: '2rem',
-          maxWidth: 520,
-          width: '100%',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.25)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
+          marginTop: '0.25rem',
         }}
       >
-        <h2 id="disclaimer-title" style={{ marginTop: 0, fontSize: '1.2rem', color: '#0f172a' }}>
-          Not Legal Advice — Please Read
-        </h2>
-        <p style={{ color: '#374151', lineHeight: 1.65, marginBottom: '0.9rem' }}>
-          The template you are about to download — <strong>{template.title}</strong> — is provided
-          for general informational and reference purposes only. It has been reviewed by a licensed
-          attorney as of the version date shown, but it does not constitute legal advice and does
-          not create an attorney-client relationship between you and this platform or any attorney.
-        </p>
-        <p style={{ color: '#374151', lineHeight: 1.65, marginBottom: '0.9rem' }}>
-          State statutes governing community associations change regularly. You should consult a
-          qualified attorney licensed in {STATE_META[template.state]?.label ?? template.state}{' '}
-          before using this template in any binding agreement, and you should verify that the
-          statutory year ({template.statute_year}) reflected in this template matches the current
-          law in your jurisdiction.
-        </p>
-        <p style={{ color: '#374151', lineHeight: 1.65, marginBottom: '1.5rem' }}>
-          By clicking "I Understand — Download Template" below, you acknowledge that you have read
-          and understood this notice and that you are downloading this template at your own
-          discretion.
-        </p>
-        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={onClose}
-            disabled={loading}
-            style={{ fontSize: '0.9rem' }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn"
-            onClick={onAccept}
-            disabled={loading}
-            style={{ fontSize: '0.9rem' }}
-          >
-            {loading ? 'Recording…' : 'I Understand — Download Template'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface TemplateCardProps {
-  template: TemplateVersion;
-  onDownloadClick: (t: TemplateVersion) => void;
-}
-
-function TemplateCard({ template, onDownloadClick }: TemplateCardProps) {
-  const [hovered, setHovered] = useState(false);
-  const locked = template.review_status !== 'approved';
-  const reviewedDate = template.attorney_reviewed_at
-    ? new Date(template.attorney_reviewed_at).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
-    : null;
-
-  return (
-    <div
-      className="card"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        transition: 'box-shadow 0.18s ease, transform 0.18s ease',
-        boxShadow: hovered
-          ? '0 8px 32px rgba(0,0,0,0.13)'
-          : '0 1px 4px rgba(0,0,0,0.06)',
-        transform: hovered ? 'translateY(-2px)' : 'translateY(0)',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.4rem' }}>
-            <StateChip state={template.state} />
-            <ReviewBadge status={template.review_status} />
-          </div>
-          <h3 style={{ margin: '0 0 0.3rem', fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>
-            {template.title}
-          </h3>
-          {template.description && (
-            <p className="muted" style={{ margin: '0 0 0.5rem', fontSize: '0.87rem', lineHeight: 1.5 }}>
-              {template.description}
-            </p>
-          )}
-          <div style={{ display: 'flex', gap: '1.2rem', flexWrap: 'wrap' }}>
-            <span className="muted" style={{ fontSize: '0.82rem' }}>
-              Version {template.version} · Statute Year {template.statute_year}
-            </span>
-            {reviewedDate && (
-              <span className="muted" style={{ fontSize: '0.82rem' }}>
-                Attorney reviewed {reviewedDate}
-              </span>
-            )}
-            {template.attorney_name && (
-              <span className="muted" style={{ fontSize: '0.82rem' }}>
-                {template.attorney_name}
-              </span>
-            )}
-          </div>
-        </div>
-        <div style={{ flexShrink: 0, alignSelf: 'center' }}>
-          {locked ? (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.45rem 0.9rem',
-                border: '1px solid #e2e8f0',
-                borderRadius: '0.4rem',
-                background: '#f8fafc',
-                color: '#64748b',
-                fontSize: '0.85rem',
-                cursor: 'default',
-              }}
-            >
-              <span aria-hidden="true">🔒</span>
-              <span>Review in Progress</span>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="btn"
-              style={{ fontSize: '0.87rem', padding: '0.45rem 1rem' }}
-              onClick={() => onDownloadClick(template)}
-            >
-              Download
-            </button>
-          )}
-        </div>
-      </div>
-      {locked && (
-        <p
-          style={{
-            margin: '0.75rem 0 0',
-            padding: '0.6rem 0.85rem',
-            background: '#fffbeb',
-            border: '1px solid #fde68a',
-            borderRadius: '0.35rem',
-            fontSize: '0.83rem',
-            color: '#92400e',
-            lineHeight: 1.5,
-          }}
-        >
-          This template is currently undergoing attorney review to ensure it reflects the latest{' '}
-          {template.statute_year} {STATE_META[template.state]?.label ?? template.state} statutes.
-          It will be available for download once the review is complete. Please check back soon.
-        </p>
-      )}
-    </div>
-  );
-}
-
-function UncoveredStateCard({ state, onNotify }: { state: string; onNotify: (s: string) => void }) {
-  const meta = STATE_META[state] ?? { label: state, color: '#fff', bg: '#64748b' };
-  return (
-    <div
-      className="card"
-      style={{
-        opacity: 0.72,
-        border: '1.5px dashed #cbd5e1',
-        background: '#f8fafc',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <StateChip state={state} />
-          <p style={{ margin: '0.4rem 0 0', fontSize: '0.87rem', color: '#64748b' }}>
-            {meta.label} templates are not yet available. Our team is preparing attorney-reviewed
-            agreements for this state.
-          </p>
-        </div>
-        <button
-          type="button"
+        <span className="muted" style={{ fontSize: '0.78rem' }}>
+          State notes: {STATE_ORDER.map((s) => s).join(' · ')}
+        </span>
+        <Link
+          href={`/templates/${doc.slug}`}
           className="btn secondary"
-          style={{ fontSize: '0.83rem', padding: '0.4rem 0.85rem', flexShrink: 0 }}
-          onClick={() => onNotify(state)}
+          style={{ fontSize: '0.85rem', padding: '0.35rem 0.9rem' }}
         >
-          Notify Me
-        </button>
-      </div>
-    </div>
-  );
-}
-
-interface NotifyModalProps {
-  state: string;
-  onClose: () => void;
-}
-
-function NotifyModal({ state, onClose }: NotifyModalProps) {
-  const meta = STATE_META[state] ?? { label: state, color: '#fff', bg: '#64748b' };
-  const [submitted, setSubmitted] = useState(false);
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0,0,0,0.4)',
-        padding: '1rem',
-      }}
-    >
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: '0.75rem',
-          padding: '2rem',
-          maxWidth: 420,
-          width: '100%',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
-        }}
-      >
-        {submitted ? (
-          <>
-            <h2 style={{ marginTop: 0, fontSize: '1.1rem', color: '#065f46' }}>You&#39;re on the list!</h2>
-            <p style={{ color: '#374151', lineHeight: 1.6 }}>
-              We will notify you as soon as {meta.label} management agreement templates become
-              available.
-            </p>
-            <button type="button" className="btn" onClick={onClose} style={{ marginTop: '0.5rem' }}>
-              Close
-            </button>
-          </>
-        ) : (
-          <>
-            <h2 style={{ marginTop: 0, fontSize: '1.1rem', color: '#0f172a' }}>
-              Notify me when {meta.label} templates are ready
-            </h2>
-            <p style={{ color: '#64748b', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1.25rem' }}>
-              We are actively preparing attorney-reviewed management agreement templates for{' '}
-              {meta.label}. Click below and we will send you an email when they are published.
-            </p>
-            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn secondary" onClick={onClose}>
-                Cancel
-              </button>
-              <button type="button" className="btn" onClick={() => setSubmitted(true)}>
-                Notify Me
-              </button>
-            </div>
-          </>
-        )}
+          Read &amp; copy
+        </Link>
       </div>
     </div>
   );
 }
 
 export default function TemplatesPage() {
-  const [templates, setTemplates] = useState<TemplateVersion[]>([]);
-  const [user, setUser] = useState<UserContext | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [pendingTemplate, setPendingTemplate] = useState<TemplateVersion | null>(null);
-  const [notifyState, setNotifyState] = useState<string | null>(null);
-  const [downloadLoading, startDownloadTransition] = useTransition();
-  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    getTemplatesPageData()
-      .then(({ user: u, templates: tpls }) => {
-        setUser(u);
-        setTemplates(tpls);
-      })
-      .catch((err: unknown) => setError(String(err)))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const coveredStates = new Set(templates.map((t) => t.state));
-  const uncoveredStates = LAUNCH_STATES.filter((s) => !coveredStates.has(s));
-
-  const groupedByState: Record<string, TemplateVersion[]> = {};
-  for (const t of templates) {
-    if (!groupedByState[t.state]) groupedByState[t.state] = [];
-    groupedByState[t.state].push(t);
-  }
-
-  function handleDownloadClick(template: TemplateVersion) {
-    setDownloadSuccess(null);
-    setPendingTemplate(template);
-  }
-
-  function handleDisclaimerAccept() {
-    if (!pendingTemplate || !user) return;
-    const tpl = pendingTemplate;
-    startDownloadTransition(async () => {
-      await recordDownload(tpl.id, user.orgId, user.userId, user.userEmail);
-      setPendingTemplate(null);
-      setDownloadSuccess(tpl.id);
-      if (tpl.file_url) {
-        window.open(tpl.file_url, '_blank', 'noopener,noreferrer');
-      }
-    });
-  }
-
+  const groups = templatesByCategory();
   return (
     <main>
-      <style>{`
-        .template-section { margin-bottom: 2.5rem; }
-        .template-section h2 { font-size: 1rem; font-weight: 700; color: #374151; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
-        .template-grid { display: flex; flex-direction: column; gap: 0.85rem; }
-      `}</style>
-
-      <h1>Management Agreement Templates</h1>
-      <p>
-        Attorney-reviewed state agreement templates for the five highest-HOA-density launch states.
-        Download requires acknowledging that templates are for reference only and do not constitute
-        legal advice.
-      </p>
-
-      {loading && (
-        <div className="empty" style={{ borderStyle: 'solid' }}>
-          <p className="muted">Loading templates…</p>
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="card" style={{ borderColor: '#fca5a5', background: '#fff1f2' }}>
-          <p style={{ color: '#b91c1c', margin: 0 }}>⚠ Could not load templates: {error}</p>
-        </div>
-      )}
-
-      {!loading && !error && templates.length === 0 && uncoveredStates.length === 0 && (
-        <div className="empty">
-          <p style={{ fontWeight: 600, margin: '0 0 0.4rem' }}>No templates yet</p>
-          <p className="muted" style={{ margin: 0 }}>
-            Management agreement templates for Florida, California, Texas, Arizona, and Nevada will
-            appear here once they have been published.
-          </p>
-        </div>
-      )}
-
-      {!loading && !error && (
-        <>
-          {LAUNCH_STATES.filter((s) => coveredStates.has(s)).map((state) => (
-            <section key={state} className="template-section">
-              <h2>
-                <StateChip state={state} />
-                {STATE_META[state]?.label ?? state}
-              </h2>
-              <div className="template-grid">
-                {(groupedByState[state] ?? []).map((tpl) => (
-                  <TemplateCard
-                    key={tpl.id}
-                    template={tpl}
-                    onDownloadClick={handleDownloadClick}
-                  />
-                ))}
-                {downloadSuccess && groupedByState[state]?.some((t) => t.id === downloadSuccess) && (
-                  <p style={{ color: '#065f46', fontSize: '0.85rem', margin: 0 }}>
-                    ✓ Download recorded. Your file is opening in a new tab.
-                  </p>
-                )}
-              </div>
-            </section>
+      <header style={{ marginBottom: '2rem' }}>
+        <span className="eyebrow">Free board document library</span>
+        <h1 style={{ marginBottom: '0.5rem' }}>
+          Board documents you can send this week
+        </h1>
+        <p style={{ maxWidth: '46rem' }}>
+          {TEMPLATE_LIBRARY.length} documents written from how boards actually hire, run
+          meetings, and manage vendors — an RFP with a weighted scoring rubric, a management
+          agreement with real termination and insurance clauses, meeting minutes, violation
+          notices, and more. Fill in the{' '}
+          <mark
+            style={{
+              background: 'color-mix(in srgb, var(--substrate-accent) 14%, transparent)',
+              color: 'var(--substrate-fg)',
+              padding: '0 0.25rem',
+              borderRadius: 4,
+            }}
+          >
+            [BRACKETED]
+          </mark>{' '}
+          placeholders, have your association&rsquo;s attorney review, and send. No signup, no
+          email gate.
+        </p>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.9rem' }}>
+          {STATE_ORDER.map((s) => (
+            <span key={s} className="pill">
+              {STATE_LABELS[s]}
+            </span>
           ))}
+          <span className="pill success">No login required</span>
+        </div>
+      </header>
 
-          {uncoveredStates.length > 0 && (
-            <section className="template-section">
-              <h2 style={{ color: '#94a3b8' }}>Coming Soon</h2>
-              <div className="template-grid">
-                {uncoveredStates.map((state) => (
-                  <UncoveredStateCard
-                    key={state}
-                    state={state}
-                    onNotify={(s) => setNotifyState(s)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-        </>
-      )}
+      <div
+        className="surface"
+        style={{ padding: '1rem 1.25rem', display: 'flex', gap: '0.75rem', alignItems: 'baseline' }}
+        role="note"
+      >
+        <strong style={{ whiteSpace: 'nowrap' }}>Not legal advice.</strong>
+        <span className="muted" style={{ fontSize: '0.92rem', lineHeight: 1.55 }}>
+          These documents cite each state&rsquo;s community-association statute so your board
+          knows where the law applies, but no attorney has reviewed them for your association.
+          Have your own counsel review anything you intend to sign or send.
+        </span>
+      </div>
 
-      {pendingTemplate && (
-        <DisclaimerModal
-          template={pendingTemplate}
-          loading={downloadLoading}
-          onAccept={handleDisclaimerAccept}
-          onClose={() => setPendingTemplate(null)}
-        />
-      )}
+      {groups.map(({ category, templates }) => (
+        <section key={category} style={{ marginTop: '2.5rem' }}>
+          <h2 style={{ marginBottom: '0.35rem' }}>{CATEGORY_META[category].label}</h2>
+          <p className="muted" style={{ marginTop: 0, marginBottom: '1.25rem', maxWidth: '44rem' }}>
+            {CATEGORY_META[category].blurb}
+          </p>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: '1.1rem',
+            }}
+          >
+            {templates.map((doc) => (
+              <TemplateCard key={doc.slug} doc={doc} />
+            ))}
+          </div>
+        </section>
+      ))}
 
-      {notifyState && (
-        <NotifyModal state={notifyState} onClose={() => setNotifyState(null)} />
-      )}
+      <section className="cta-band" style={{ marginTop: '3rem', padding: '2rem' }}>
+        <h2 style={{ marginTop: 0 }}>Hiring a management company? Skip the blank page.</h2>
+        <p style={{ maxWidth: '42rem' }}>
+          The RFP template below takes about 45 minutes to fill in by hand. Boardwell&rsquo;s
+          intake asks your board 10 minutes of questions about your community, then drafts the
+          RFP for you — scope, questionnaire, fee-schedule requirements, and the weighted
+          scoring rubric, ready to send to bidders.
+        </p>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Link href="/intake" className="btn">
+            Start the 10-minute intake
+          </Link>
+          <Link href="/templates/management-company-rfp" className="btn secondary">
+            Or fill in the RFP template yourself
+          </Link>
+        </div>
+      </section>
     </main>
   );
 }
