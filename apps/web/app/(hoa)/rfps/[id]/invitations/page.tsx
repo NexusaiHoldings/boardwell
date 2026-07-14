@@ -7,7 +7,7 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 interface PageProps {
   params: { id: string };
-  searchParams: { error?: string; success?: string };
+  searchParams: { error?: string; success?: string; invite_name?: string; invite_email?: string };
 }
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
@@ -188,6 +188,9 @@ export default async function InvitationsPage({ params, searchParams }: PageProp
   const canInvite = invitations.length < 10;
   const errorMsg = searchParams.error ? decodeURIComponent(searchParams.error) : null;
   const showSuccess = searchParams.success === '1';
+  // Directory hand-off: /directory "Invite to an RFP" pre-fills this form.
+  const inviteName = (searchParams.invite_name ?? '').slice(0, 200);
+  const inviteEmail = (searchParams.invite_email ?? '').slice(0, 200);
 
   async function handleInvite(formData: FormData) {
     'use server';
@@ -265,6 +268,7 @@ export default async function InvitationsPage({ params, searchParams }: PageProp
                 <input
                   id="company_name"
                   name="company_name"
+                  defaultValue={inviteName}
                   type="text"
                   required
                   placeholder="Acme Property Management"
@@ -278,6 +282,7 @@ export default async function InvitationsPage({ params, searchParams }: PageProp
                 <input
                   id="company_email"
                   name="company_email"
+                  defaultValue={inviteEmail}
                   type="email"
                   required
                   placeholder="bids@acmepm.com"

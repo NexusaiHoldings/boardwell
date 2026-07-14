@@ -94,7 +94,13 @@ function EmptyState() {
   );
 }
 
-export default async function RfpsPage() {
+export default async function RfpsPage({
+  searchParams,
+}: {
+  searchParams?: { invite_name?: string; invite_email?: string };
+} = {}) {
+  const inviteName = (searchParams?.invite_name ?? '').slice(0, 200);
+  const inviteEmail = (searchParams?.invite_email ?? '').slice(0, 200);
   const user = await getCurrentUser();
   const rfps = await listRfps(user.orgId);
 
@@ -114,12 +120,44 @@ export default async function RfpsPage() {
         )}
       </div>
 
+      {inviteName && inviteEmail && (
+        <div
+          role="note"
+          style={{
+            marginTop: '0.75rem',
+            padding: '0.75rem 1rem',
+            borderRadius: 8,
+            border: '1px solid #93c5fd',
+            background: '#eff6ff',
+            color: '#1e3a8a',
+            fontSize: '0.9rem',
+          }}
+        >
+          Inviting <strong>{inviteName}</strong> from the directory — choose the RFP below
+          {rfps.length === 0 ? ' (create one first via intake)' : ''} and their details will be
+          pre-filled on the invitation form.
+        </div>
+      )}
+
       {rfps.length === 0 ? (
         <EmptyState />
       ) : (
         <div style={{ marginTop: '1.5rem' }}>
           {rfps.map((rfp) => (
-            <RfpCard key={rfp.id} rfp={rfp} />
+            inviteName && inviteEmail ? (
+              <div key={rfp.id} style={{ marginBottom: '0.75rem' }}>
+                <RfpCard rfp={rfp} />
+                <a
+                  href={`/rfps/${rfp.id}/invitations?invite_name=${encodeURIComponent(inviteName)}&invite_email=${encodeURIComponent(inviteEmail)}`}
+                  className="btn secondary"
+                  style={{ fontSize: '0.85rem', marginTop: '-0.5rem' }}
+                >
+                  Invite {inviteName} to this RFP →
+                </a>
+              </div>
+            ) : (
+              <RfpCard key={rfp.id} rfp={rfp} />
+            )
           ))}
         </div>
       )}

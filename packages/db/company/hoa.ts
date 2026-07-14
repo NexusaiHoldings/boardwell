@@ -293,3 +293,70 @@ CREATE TABLE IF NOT EXISTS hoa_vendor_profiles (
   CONSTRAINT hoa_vendor_profiles_email_unique UNIQUE (company_email)
 );
 `;
+
+/**
+ * Marketplace directory + monetization (chairman lab-discussion phase:
+ * per-market rollout starting OREGON [chairman-provided data], freemium
+ * directories both sides, paid RFP transactions). Enforcement ships DARK —
+ * see lib/hoa/entitlements.ts MONETIZATION_ENFORCED.
+ */
+export const HOA_DIRECTORY_COMPANIES_DDL = `
+CREATE TABLE IF NOT EXISTS hoa_directory_companies (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_name     TEXT NOT NULL,
+  company_email    TEXT,
+  phone            TEXT,
+  website          TEXT,
+  city             TEXT,
+  state            TEXT NOT NULL,
+  market           TEXT,
+  units_managed    TEXT,
+  description      TEXT,
+  source           TEXT NOT NULL DEFAULT 'imported',
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hoa_directory_companies_state
+  ON hoa_directory_companies (state, city);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_hoa_directory_companies_dedupe
+  ON hoa_directory_companies (company_name, state);
+`;
+
+export const HOA_DIRECTORY_COMMUNITIES_DDL = `
+CREATE TABLE IF NOT EXISTS hoa_directory_communities (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  community_name   TEXT NOT NULL,
+  community_type   TEXT,
+  city             TEXT,
+  state            TEXT NOT NULL,
+  market           TEXT,
+  unit_count       TEXT,
+  source           TEXT NOT NULL DEFAULT 'imported',
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hoa_directory_communities_state
+  ON hoa_directory_communities (state, city);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_hoa_directory_communities_dedupe
+  ON hoa_directory_communities (community_name, state);
+`;
+
+/** Per-RFP paid transactions (board side) + pay-to-respond receipts (vendor side). */
+export const HOA_RFP_TRANSACTIONS_DDL = `
+CREATE TABLE IF NOT EXISTS hoa_rfp_transactions (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  rfp_id           UUID NOT NULL,
+  org_id           TEXT,
+  payer_side       TEXT NOT NULL,
+  payer_email      TEXT,
+  kind             TEXT NOT NULL,
+  amount_usd       NUMERIC NOT NULL,
+  status           TEXT NOT NULL DEFAULT 'waived_early_access',
+  stripe_session_id TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_hoa_rfp_transactions_rfp
+  ON hoa_rfp_transactions (rfp_id, created_at DESC);
+`;

@@ -29,6 +29,8 @@ export const NAV_CONFIG: NavConfig = {
     { href: "/intake", label: "Intake" },
     { href: "/rfps", label: "Rfps" },
     { href: "/templates", label: "Templates" },
+    { href: "/directory", label: "Directory" },
+    { href: "/pricing", label: "Pricing" },
   ],
   groups: [],
 };

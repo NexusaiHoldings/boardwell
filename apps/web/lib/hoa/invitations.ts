@@ -7,6 +7,7 @@ import {
   upsertVendorProfileFromBid,
   type VendorProfile,
 } from '@/lib/hoa/vendor-profile';
+import { assertBoardRfpTransaction, assertVendorResponse } from '@/lib/hoa/entitlements';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
@@ -125,6 +126,13 @@ export async function createInvitation(
     return { success: false, error: 'This email has already been invited' };
   }
 
+  // Monetization gate (DARK until launch): the paid "RFP transaction" fires
+  // on the first invitation send. In dark mode this records a waived row.
+  const txn = await assertBoardRfpTransaction(rfpId, orgId);
+  if (!txn.allowed) {
+    return { success: false, error: 'This RFP requires payment before invitations can be sent.' };
+  }
+
   const token = await createBidToken(rfpId, companyName, companyEmail, 30);
 
   const { rows: tokenRows } = await pool.query<{ id: string }>(
@@ -225,6 +233,13 @@ export async function submitBid(
   if (ctx.invitation.status === 'declined') return { success: false, error: 'Invitation was declined' };
 
   const { invitation } = ctx;
+
+  // Monetization gate (DARK until launch): pay-to-respond. Pro subscribers
+  // and dark mode pass; dark mode records a waived row for revenue telemetry.
+  const gate = await assertVendorResponse(invitation.rfp_id, invitation.company_email);
+  if (!gate.allowed) {
+    return { success: false, error: 'This response requires payment or a Boardwell Pro subscription.' };
+  }
 
   await pool.query(
     `INSERT INTO hoa_bid_submissions (
