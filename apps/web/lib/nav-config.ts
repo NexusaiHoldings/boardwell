@@ -26,11 +26,12 @@ export type NavConfig = {
 export const NAV_CONFIG: NavConfig = {
   primary: [
     { href: "/", label: "Home" },
+    { href: "/directory", label: "Directory" },
     { href: "/intake", label: "Intake" },
+    { href: "/pricing", label: "Pricing" },
     { href: "/rfps", label: "Rfps" },
     { href: "/templates", label: "Templates" },
-    { href: "/directory", label: "Directory" },
-    { href: "/pricing", label: "Pricing" },
+    { href: "/vendor", label: "Vendor" },
   ],
   groups: [],
 };
