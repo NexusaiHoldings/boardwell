@@ -28,7 +28,7 @@
 
 export type TemplateCategory = "hire" | "govern" | "operate";
 
-export type LaunchState = "FL" | "CA" | "TX" | "AZ" | "NV";
+export type LaunchState = "FL" | "CA" | "TX" | "AZ" | "NV" | "OR" | "WA";
 
 export interface StateNote {
   state: LaunchState;
@@ -94,6 +94,8 @@ const STATUTE_BY_STATE: Record<LaunchState, string> = {
   TX: "Texas Property Code Chapter 209 (Texas Residential Property Owners Protection Act)",
   AZ: "Arizona Revised Statutes Title 33, Chapter 16 (Planned Communities, §33-1801 et seq.)",
   NV: "Nevada Revised Statutes Chapter 116 (Common-Interest Ownership)",
+  OR: "Oregon Planned Community Act, ORS 94.550–94.783",
+  WA: "Washington Homeowners' Association Act, RCW Chapter 64.38",
 };
 
 export const STATE_LABELS: Record<LaunchState, string> = {
@@ -102,6 +104,8 @@ export const STATE_LABELS: Record<LaunchState, string> = {
   TX: "Texas",
   AZ: "Arizona",
   NV: "Nevada",
+  OR: "Oregon",
+  WA: "Washington",
 };
 
 function allStatesNote(perState?: Partial<Record<LaunchState, string>>): StateNote[] {
@@ -131,6 +135,8 @@ export const TEMPLATE_LIBRARY: TemplateDoc[] = [
       FL: "Ask each bidder to confirm its community association managers hold active Florida CAM licenses (required under Part VIII of Chapter 468, Florida Statutes) and how many licensed CAMs would serve your account.",
       CA: "California does not license community association managers statewide; ask instead whether the assigned manager holds a CCAM, CMCA, or equivalent designation, and confirm familiarity with Davis-Stirling (Civil Code §4000 et seq.).",
       NV: "Nevada requires community managers to hold a certificate under NRS 116A. Ask each bidder for the certificate numbers of the managers who would serve your association.",
+      OR: "Oregon does not license community association managers statewide. Ask whether the assigned manager holds a CMCA, PCAM, or equivalent professional designation, and confirm their familiarity with the Oregon Planned Community Act (ORS 94.550–94.783).",
+      WA: "Washington does not license community association managers statewide. Ask whether the assigned manager holds a CMCA, PCAM, or equivalent designation, and confirm familiarity with the Washington Homeowners' Association Act (RCW Chapter 64.38).",
     }),
     sections: [
       {
@@ -186,6 +192,8 @@ export const TEMPLATE_LIBRARY: TemplateDoc[] = [
       TX: "Records production and owner requests should track Texas Property Code §209.005 (association records).",
       AZ: "Records inspection obligations should track A.R.S. §33-1805 (examination of association financial and other records).",
       NV: "The Manager must hold and maintain a community-manager certificate under NRS 116A; records obligations should track NRS 116.31175.",
+      OR: "Records obligations should track ORS 94.650 (homeowners' right to inspect association records). The Manager must comply with the financial and governance requirements of the Oregon Planned Community Act (ORS 94.550–94.783).",
+      WA: "Records obligations should track RCW 64.38.045 (owner right to inspect association records) and the financial-management requirements of the Washington Homeowners' Association Act (RCW Chapter 64.38).",
     }),
     sections: [
       {
@@ -347,6 +355,8 @@ export const TEMPLATE_LIBRARY: TemplateDoc[] = [
       TX: "Texas Property Code Chapter 209 addresses open board meetings for certain associations; record the statutory basis for any closed/executive session.",
       AZ: "A.R.S. §33-1804: board meetings are generally open to members; minutes should note that the open-meeting requirements were met and the basis for any closed session.",
       NV: "NRS 116.31083: minutes must be made available to unit owners; note the statutory basis for any executive session.",
+      OR: "ORS 94.640: board meetings of planned communities are generally open to homeowners. Minutes should note compliance with open-meeting requirements and record the statutory basis for any executive session.",
+      WA: "RCW 64.38.035: board meetings are generally open to homeowners. Minutes must be retained and made available; note the statutory basis for any executive or closed session.",
     }),
     sections: [
       {
@@ -387,6 +397,8 @@ export const TEMPLATE_LIBRARY: TemplateDoc[] = [
       TX: "Texas Property Code §209.014 requires an annual meeting of members; §209.0056 sets election-notice timing for certain associations. Verify both against your bylaws.",
       AZ: "A.R.S. §33-1804 addresses member meeting notice for planned communities. Verify the current minimum notice days against your bylaws and use the longer period.",
       NV: "NRS 116.3108 governs unit-owner meetings and notice content, including agenda requirements. Nevada's agenda rules limit action on items not listed — make the agenda complete.",
+      OR: "ORS 94.624 governs annual member meetings and notice for planned communities. Verify the current minimum notice period against your bylaws and use the longer period.",
+      WA: "RCW 64.38.025 governs homeowner association member meetings and notice requirements. Verify the current minimum notice days and any election procedures specified in your governing documents.",
     }),
     sections: [
       {
@@ -427,6 +439,8 @@ export const TEMPLATE_LIBRARY: TemplateDoc[] = [
       TX: "Chapter 209 does not set a general statutory cap on assessment increases for most HOAs — your declaration controls. Confirm the declaration's cap and any member-vote trigger.",
       AZ: "A.R.S. §33-1803 caps regular-assessment increases for planned communities (generally 20% per year absent member approval). Verify the current cap before adopting.",
       NV: "NRS 116.3115 governs assessments; NRS 116.31151 requires distributing the budget or a summary to owners, and reserve funding is regulated. Calendar the member-distribution deadline.",
+      OR: "ORS 94.595 governs assessments in Oregon planned communities. Verify your declaration's cap on regular-assessment increases and any member-vote triggers before adopting a budget with a rate change.",
+      WA: "RCW 64.38.020 addresses HOA financial powers in Washington. Verify your declaration's assessment-increase caps and member-vote requirements before adopting the budget.",
     }),
     sections: [
       {
@@ -461,6 +475,8 @@ export const TEMPLATE_LIBRARY: TemplateDoc[] = [
       TX: "Texas Property Code §209.006: before enforcement action, most associations must send notice by certified mail describing the violation, informing the owner of curable-violation rights (generally a reasonable period of at least 30 days for curable violations) and the right to request a hearing under §209.007.",
       AZ: "A.R.S. §33-1803: an owner who receives a violation notice may respond and is entitled to specified information about the violation (including who observed it); fines require notice and an opportunity to be heard. Include the statutory response-rights language.",
       NV: "NRS 116.31031: fines require notice and an opportunity for a hearing, cure periods apply to continuing violations, and fine amounts are capped by statute for non-health/safety violations. Verify current caps before your fine schedule is referenced.",
+      OR: "ORS 94.630 et seq. governs enforcement of planned community rules in Oregon. Associations must provide notice and an opportunity to cure before levying fines. Verify current hearing-rights requirements before referencing a fine schedule.",
+      WA: "RCW 64.38.020 and your governing documents govern enforcement in Washington. Provide adequate written notice of the violation and an opportunity to cure; confirm any hearing rights applicable under your declaration before assessing fines.",
     }),
     sections: [
       {
@@ -496,6 +512,8 @@ export const TEMPLATE_LIBRARY: TemplateDoc[] = [
       TX: "Texas has no general statewide contractor license for most trades (specialty trades like electrical/HVAC/plumbing are licensed) — verify the specific trade license and insurance directly. Texas Property Code Chapter 53 lien rules apply to improvements.",
       AZ: "Verify the license and its classification with the Arizona Registrar of Contractors; unlicensed contracting is a common enforcement issue. Arizona lien statutes apply to improvement work.",
       NV: "Verify the license, classification, and monetary limit with the Nevada State Contractors Board — Nevada licenses carry per-contract monetary limits that must cover this contract amount.",
+      OR: "Verify the contractor's license with the Oregon Construction Contractors Board (CCB) and confirm classification matches the scope of work. Oregon's construction lien law (ORS Chapter 87) applies to improvement work — collect lien releases with each payment.",
+      WA: "Verify the contractor's license with the Washington Department of Labor & Industries (L&I) and confirm the registration is current. Washington's construction lien law (RCW Chapter 60.04) applies to improvement work — collect conditional and unconditional lien releases with each progress payment.",
     }),
     sections: [
       {
@@ -567,7 +585,7 @@ export function templatePlainText(doc: TemplateDoc): string {
   }
   const notes = doc.stateNotes;
   if (notes.length > 0) {
-    lines.push("STATE NOTES (FL / CA / TX / AZ / NV)");
+    lines.push(`STATE NOTES (${(Object.keys(STATE_LABELS) as LaunchState[]).join(' / ')})`);
     lines.push("");
     for (const n of notes) {
       lines.push(`${STATE_LABELS[n.state]}: ${n.note}`);

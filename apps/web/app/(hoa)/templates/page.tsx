@@ -13,10 +13,10 @@ import {
 export const metadata: Metadata = {
   title: 'Free HOA Board Document Templates | Boardwell',
   description:
-    'Ten board-ready HOA documents — management company RFP, management agreement, termination notice, meeting minutes, violation notice, and more. State notes for FL, CA, TX, AZ, and NV. No signup required.',
+    'Ten board-ready HOA documents — management company RFP, management agreement, termination notice, meeting minutes, violation notice, and more. State notes for FL, CA, TX, AZ, NV, OR, and WA. No signup required.',
 };
 
-const STATE_ORDER: LaunchState[] = ['FL', 'CA', 'TX', 'AZ', 'NV'];
+const STATE_ORDER: LaunchState[] = ['FL', 'CA', 'TX', 'AZ', 'NV', 'OR', 'WA'];
 
 function TemplateCard({ doc }: { doc: TemplateDoc }) {
   const words = templateWordCount(doc);
